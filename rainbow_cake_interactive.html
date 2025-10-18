@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Slice of Joy: An Interactive Baking Story</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Rainbow Sorbet -->
+    <!-- Application Structure Plan: This SPA reimagines the linear blog post as a dynamic, guided baking journey. The structure is sequential, leading the user from the initial inspiration to the final reward. It starts with a hero section, moves into an interactive three-step guide for the baking process, climaxes with the video reveal of the finished cake, and ends with a reflection. This "storytelling" structure was chosen to make the content more engaging and memorable than a static article, building anticipation for the final, colorful result. -->
+    <!-- Visualization & Content Choices: The source report is a qualitative narrative. The goal is to make the process feel interactive and fun. Report Info: Story of baking a rainbow cake. -> Goal: Inform, Guide, Entertain. -> Viz/Presentation Method: The core is an interactive process guide using styled HTML/CSS cards and specific images/media (now 3 user-provided images and the source video). The different batter colors are visualized with colored circles. The main media is the source video. -> Interaction: Scroll-based animations reveal each section. The video autoplays to showcase the vibrant final product. -> Justification: Replacing abstract text with concrete images of the process (shopping, box, pouring) dramatically increases engagement and clarity, turning it into a visual instruction set. -> Library/Method: Vanilla JS (IntersectionObserver) for scroll animations, HTML5 video and <img> tags. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #FEFDFB; /* Very light, warm white */
+            color: #4A4A4A;
+        }
+        .font-serif {
+            font-family: 'Lora', serif;
+        }
+        .scroll-animate {
+            opacity: 0;
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+            transform: translateY(30px);
+        }
+        .scroll-animate.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .rainbow-text {
+            background-image: linear-gradient(to right, #EF4444, #F97316, #EAB308, #22C55E, #3B82F6, #8B5CF6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .color-dot {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <main class="container mx-auto px-4 py-16 sm:px-6 lg:px-8 max-w-3xl">
+
+        <!-- Hero Section -->
+        <header class="text-center mb-20 md:mb-24 scroll-animate">
+            <h1 class="font-serif text-4xl md:text-6xl font-bold rainbow-text">A Slice of Joy</h1>
+            <p class="mt-4 text-lg md:text-xl text-gray-600">Conquering the spectacular Rainbow Layer Cake, one colorful step at a time.</p>
+        </header>
+
+        <!-- The Inspiration Section -->
+        <section class="mb-20 md:mb-24 scroll-animate">
+            <div class="text-center">
+                <div class="text-6xl mb-4">🎂</div>
+                <h2 class="font-serif text-3xl font-bold mb-4">The Spark of an Idea</h2>
+                <p class="text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto">
+                    It all started at the store. I spotted a vibrant rainbow layer cake mix on the shelf, and I knew it was calling my name. I was determined to turn that simple box into something spectacular.
+                </p>
+                <div class="mt-6">
+                    <img src="https://i.imgur.com/glrujhV.png" alt="Buying the rainbow cake mix in the store aisle" class="w-full max-w-sm mx-auto rounded-lg shadow-md" />
+                </div>
+            </div>
+        </section>
+
+        <!-- The Process: Interactive Steps -->
+        <section class="mb-20 md:mb-24">
+            <div class="text-center mb-12 scroll-animate">
+                <h2 class="font-serif text-3xl font-bold">The Baking Journey</h2>
+                <p class="mt-2 max-w-2xl mx-auto text-gray-600">Here's how the magic happened, broken down into three fun stages.</p>
+            </div>
+            <div class="space-y-10">
+                <!-- Step 1 -->
+                <div class="scroll-animate bg-white p-8 rounded-2xl shadow-lg transform transition-transform duration-300 hover:scale-105">
+                    <h3 class="font-serif text-2xl font-semibold mb-4 text-center">Step 1: The Base & The Divide</h3>
+                    <p class="text-gray-600 mb-6 text-center">After mixing the batter, the real fun began. I started with the **cake mix** and divided the base batter into separate bowls, adding food coloring to create a vibrant palette.</p>
+                    <div class="flex flex-col items-center gap-4">
+                        <img src="https://i.imgur.com/lOmCZiF.png" alt="Rainbow Layer Cake Mix box" class="w-1/2 max-w-[200px] rounded-lg shadow-md" />
+                        <div class="flex justify-center items-center gap-2 flex-wrap mt-4">
+                            <div class="color-dot" style="background-color: #EF4444;"></div>
+                            <div class="color-dot" style="background-color: #F97316;"></div>
+                            <div class="color-dot" style="background-color: #EAB308;"></div>
+                            <div class="color-dot" style="background-color: #22C55E;"></div>
+                            <div class="color-dot" style="background-color: #3B82F6;"></div>
+                            <div class="color-dot" style="background-color: #8B5CF6;"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Step 2 -->
+                <div class="scroll-animate bg-white p-8 rounded-2xl shadow-lg transform transition-transform duration-300 hover:scale-105">
+                     <h3 class="font-serif text-2xl font-semibold mb-4 text-center">Step 2: The Layering Game</h3>
+                    <p class="text-gray-600 mb-6 text-center">This was the most crucial step. I poured each distinct color into its own prepared cake pan, making sure all the layers would be uniform. Then, into the oven they went!</p>
+                    <div class="mt-4">
+                        <img src="https://i.imgur.com/c9MRqjV.png" alt="Pouring cake batter into a round cake pan" class="w-full max-w-sm mx-auto rounded-lg shadow-md" />
+                    </div>
+                </div>
+                <!-- Step 3 -->
+                <div class="scroll-animate bg-white p-8 rounded-2xl shadow-lg transform transition-transform duration-300 hover:scale-105">
+                     <h3 class="font-serif text-2xl font-semibold mb-4 text-center">Step 3: Assembly & Frosting</h3>
+                    <p class="text-gray-600 text-center">Once the layers were baked and cooled, it was time to build the masterpiece. I stacked them carefully, adding a generous layer of sweet white frosting between each one to create those clean, defined rainbow lines.</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- The Reveal Section -->
+        <section class="mb-20 md:mb-24 scroll-animate">
+             <div class="text-center mb-12">
+                <h2 class="font-serif text-3xl font-bold">The Delicious Reveal</h2>
+                <p class="mt-2 max-w-2xl mx-auto text-gray-600">The real payoff? The first slice. Cutting into the cake and seeing all those vibrant layers is pure joy. Every piece looks like a celebration!</p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-2xl overflow-hidden p-4">
+                 <video controls muted autoplay loop class="w-full h-auto rounded-lg">
+                    <source src="https://i.imgur.com/34WKI8Y.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        </section>
+
+        <!-- Reflection Section -->
+        <section class="text-center bg-white py-12 px-8 rounded-2xl shadow-lg scroll-animate">
+            <h2 class="font-serif text-3xl font-bold mb-4">A Huge, Delicious Success!</h2>
+            <p class="text-lg text-gray-600 leading-relaxed max-w-3xl mx-auto">
+                This was such a fun project! It's a perfect reminder that with a little creativity, you can turn a simple box mix into something truly special and satisfying. The final result was a huge, delicious success that brought a smile to everyone's face.
+            </p>
+        </section>
+
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const animatedElements = document.querySelectorAll('.scroll-animate');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, {
+                threshold: 0.1
+            });
+
+            animatedElements.forEach(element => {
+                observer.observe(element);
+            });
+        });
+    </script>
+
+</body>
+</html>
