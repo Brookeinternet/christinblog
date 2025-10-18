@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Story Hub (TikTok Feed Style)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+  
+
+<!-- PayPal SDK Inclusion - Load conditionally via JS for stability -->
+    <script id="paypal-sdk-loader">
+        // CRITICAL CHECK: Prevent PayPal SDK from loading if we are in a sandbox environment where it will crash the app.
+        if (typeof window.location.host !== 'undefined' && window.location.host !== '' && !window.location.host.includes('null')) {
+            const script = document.createElement('script');
+            script.src = "https://www.paypal.com/sdk/js?client-id=Ae3_17mdOsRSLXrQo8SvoeNaU764XKsqVgXlGBTav-M0yNq_bn-BY8LvxQyaK9tLuRPsJBO2oHU3wbEx&vault=true&intent=subscription";
+            script.setAttribute('data-sdk-integration-source', 'button-factory');
+            document.head.appendChild(script);
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: radial-gradient(circle at top, #2C3E50 0%, #15202B 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 1rem;
+        }
+        .tiktok-feed {
+            /* Full Screen Width Adjustment */
+            width: 90%; 
+            max-width: 1200px; /* New Max Width for large screens */
+            
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            background-color: #000000;
+            overflow-y: scroll;
+            height: 95vh; /* Use height for vertical scrolling */
+            border-radius: 12px;
+            scroll-snap-type: y mandatory;
+        }
+        .video-card {
+            height: 700px; 
+            scroll-snap-align: start;
+            position: relative;
+            background-color: #1a1a1a;
+            border-bottom: 1px solid #333;
+        }
+        .video-thumbnail {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.85;
+            transition: opacity 0.3s;
+        }
+        .video-thumbnail:hover {
+            opacity: 1;
+        }
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+        .play-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: transform 0.2s;
+        }
+        .play-button:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background-color: #111;
+            margin: 5% auto;
+            padding: 2rem;
+            border: 1px solid #444;
+            width: 90%;
+            max-width: 450px;
+            border-radius: 12px;
+            position: relative;
+            color: white;
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            transition: color 0.2s;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: #D9534F;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .success-banner {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #5CB85C;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            z-index: 101;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .auth-toggle {
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .auth-toggle:hover {
+            color: #D9534F;
+        }
+    </style>
+    <!-- Firebase Imports -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+
+        // Global Firebase variables (to be attached to window for global access)
+        window.db = null;
+        window.auth = null;
+        window.appId = null;
+        window.userId = null;
+        window.isAuthReady = false;
+
+        const initFirebase = async () => {
+            // Configuration variables (using provided and Canvas-mandated globals)
+            const providedFirebaseConfig = {
+                apiKey: "AIzaSyDSqcEGr7OEGmjjV56lbZ1zk1nnVK0GLFQ",
+                authDomain: "christina-c6e13.firebaseapp.com",
+                projectId: "christina-c6e13",
+                storageBucket: "christina-c6e13.firebasestorage.app",
+                messagingSenderId: "583316173321",
+                appId: "1:583316173321:web:2c5bc31cd7ff4003cd3ed8",
+                measurementId: "G-MCK6D78QCS"
+            };
+
+            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : providedFirebaseConfig;
+            window.appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.projectId;
+            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+            // 1. Initialize App and Services
+            const app = initializeApp(firebaseConfig);
+            window.db = getFirestore(app);
+            window.auth = getAuth(app);
+            setLogLevel('Debug');
+
+            // 2. Authentication Listener & Sign-in
+            onAuthStateChanged(window.auth, (user) => {
+                if (!window.isAuthReady) {
+                    // This block only runs after the initial sign-in attempt
+                    window.userId = user ? user.uid : (window.userId || crypto.randomUUID());
+                    window.isAuthReady = true;
+                    updateAuthUI(user);
+                    console.log(`Firebase initialized. User ID: ${window.userId}`);
+                }
+            });
+
+            try {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(window.auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(window.auth);
+                }
+            } catch (error) {
+                console.error("Initial Firebase Auth failed:", error);
+            }
+        };
+
+        const updateAuthUI = (user) => {
+            const authBtn = document.getElementById('auth-button');
+            if (user && !user.isAnonymous) {
+                authBtn.textContent = `Welcome, ${user.email.split('@')[0]}`;
+                authBtn.onclick = () => showAuthModal('sign-out');
+            } else {
+                authBtn.textContent = 'Log In / Sign Up';
+                authBtn.onclick = () => showAuthModal('sign-in');
+            }
+        };
+
+        window.signOutUser = async () => {
+            try {
+                await signOut(window.auth);
+                closeModal();
+                alert('You have been signed out.');
+            } catch (error) {
+                alert('Error signing out: ' + error.message);
+            }
+        };
+
+        window.showAuthModal = (view) => {
+            // Re-using the main modal for Auth views
+            const authModalTitle = document.getElementById('auth-modal-title');
+            const authModalContent = document.getElementById('auth-modal-content');
+            const modal = document.getElementById('mainModal');
+            
+            // Hide payment UI elements
+            document.getElementById('paypal-section').classList.add('hidden');
+            document.getElementById('modal-title').classList.add('hidden');
+            document.getElementById('modal-content-area').classList.add('hidden');
+            
+            authModalTitle.classList.remove('hidden');
+            authModalContent.classList.remove('hidden');
+
+            let contentHTML = '';
+
+            if (view === 'sign-in') {
+                authModalTitle.textContent = 'Sign In';
+                contentHTML = `
+                    <form id="signInForm" class="space-y-4">
+                        <input type="email" id="signInEmail" placeholder="Email" class="w-full p-3 border border-gray-700 bg-gray-800 rounded-lg text-white" required>
+                        <input type="password" id="signInPassword" placeholder="Password" class="w-full p-3 border border-gray-700 bg-gray-800 rounded-lg text-white" required>
+                        <button type="submit" class="w-full bg-[#D9534F] text-white font-semibold py-3 rounded-lg hover:bg-red-700 transition-colors">Sign In</button>
+                        <p class="text-center text-sm">
+                            <span class="auth-toggle text-blue-400" onclick="showAuthModal('sign-up')">Need an account? Sign Up</span>
+                        </p>
+                        <p class="text-center text-sm">
+                            <span class="auth-toggle text-gray-400" onclick="showAuthModal('forgot-password')">Forgot Password?</span>
+                        </p>
+                        <p id="auth-error-message" class="text-sm text-red-400 text-center"></p>
+                    </form>
+                `;
+            } else if (view === 'sign-up') {
+                authModalTitle.textContent = 'Create Account';
+                contentHTML = `
+                    <form id="signUpForm" class="space-y-4">
+                        <input type="email" id="signUpEmail" placeholder="Email" class="w-full p-3 border border-gray-700 bg-gray-800 rounded-lg text-white" required>
+                        <input type="password" id="signUpPassword" placeholder="Password (min 6 chars)" class="w-full p-3 border border-gray-700 bg-gray-800 rounded-lg text-white" required minlength="6">
+                        <button type="submit" class="w-full bg-[#5CB85C] text-white font-semibold py-3 rounded-lg hover:bg-green-700 transition-colors">Sign Up</button>
+                        <p class="text-center text-sm">
+                            <span class="auth-toggle text-blue-400" onclick="showAuthModal('sign-in')">Already have an account? Sign In</span>
+                        </p>
+                        <p id="auth-error-message" class="text-sm text-red-400 text-center"></p>
+                    </form>
+                `;
+            } else if (view === 'forgot-password') {
+                authModalTitle.textContent = 'Reset Password';
+                contentHTML = `
+                    <form id="resetPasswordForm" class="space-y-4">
+                        <p class="text-sm text-gray-400">Enter your email and we'll send you a password reset link.</p>
+                        <input type="email" id="resetEmail" placeholder="Email" class="w-full p-3 border border-gray-700 bg-gray-800 rounded-lg text-white" required>
+                        <button type="submit" class="w-full bg-blue-500 text-white font-semibold py-3 rounded-lg hover:bg-blue-600 transition-colors">Send Reset Link</button>
+                        <p class="text-center text-sm">
+                            <span class="auth-toggle text-gray-400" onclick="showAuthModal('sign-in')">Back to Sign In</span>
+                        </p>
+                        <p id="auth-error-message" class="text-sm text-red-400 text-center"></p>
+                    </form>
+                `;
+            } else if (view === 'sign-out') {
+                 authModalTitle.textContent = `User Profile`;
+                contentHTML = `
+                    <p class="text-center text-lg mb-6">You are currently signed in as:</p>
+                    <p class="text-center font-bold text-lg text-gray-300 mb-8">${window.auth.currentUser.email}</p>
+                    <button onclick="window.signOutUser()" class="w-full bg-gray-600 text-white font-semibold py-3 rounded-lg hover:bg-gray-700 transition-colors">Sign Out</button>
+                `;
+            }
+
+            authModalContent.innerHTML = contentHTML;
+            openModal();
+            attachAuthListeners(view);
+        };
+
+        const displayAuthError = (message) => {
+            const errorElement = document.getElementById('auth-error-message');
+            if (errorElement) {
+                errorElement.textContent = message;
+            }
+        };
+
+        const attachAuthListeners = (view) => {
+            if (view === 'sign-in') {
+                document.getElementById('signInForm').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const email = document.getElementById('signInEmail').value;
+                    const password = document.getElementById('signInPassword').value;
+                    try {
+                        await signInWithEmailAndPassword(window.auth, email, password);
+                        closeModal();
+                    } catch (error) {
+                        displayAuthError("Sign In Failed: " + error.message);
+                    }
+                });
+            } else if (view === 'sign-up') {
+                document.getElementById('signUpForm').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const email = document.getElementById('signUpEmail').value;
+                    const password = document.getElementById('signUpPassword').value;
+                    try {
+                        await createUserWithEmailAndPassword(window.auth, email, password);
+                        closeModal();
+                    } catch (error) {
+                        displayAuthError("Sign Up Failed: " + error.message);
+                    }
+                });
+            } else if (view === 'forgot-password') {
+                document.getElementById('resetPasswordForm').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const email = document.getElementById('resetEmail').value;
+                    try {
+                        await sendPasswordResetEmail(window.auth, email);
+                        displayAuthError("Password reset link sent! Check your email.");
+                    } catch (error) {
+                        displayAuthError("Reset Failed: " + error.message);
+                    }
+                });
+            }
+        };
+
+
+        initFirebase();
+    </script>
+</head>
+<body>
+
+    <div class="tiktok-feed" id="tiktok-feed">
+        <!-- Header -->
+        <div class="sticky top-0 bg-black bg-opacity-90 py-3 px-4 flex justify-between items-center border-b border-gray-800 z-10">
+            <h1 class="text-white text-xl font-bold">For You</h1>
+            <div class="flex items-center space-x-3">
+                <button onclick="openSubscriptionModal()" class="bg-[#F0AD4E] text-black font-semibold text-sm py-1 px-3 rounded-full shadow-lg transition-transform duration-200 hover:scale-105">
+                    💎 Premium
+                </button>
+                <button id="auth-button" class="bg-gray-700 text-white font-semibold text-sm py-1 px-3 rounded-full transition-colors hover:bg-gray-600">
+                    Log In / Sign Up
+                </button>
+            </div>
+        </div>
+
+        <!-- Video Cards will be populated here by JavaScript -->
+    </div>
+
+    <!-- Modal for Payment OR Authentication -->
+    <div id="mainModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">&times;</span>
+            
+            <!-- Payment Content Area -->
+            <h2 id="modal-title" class="text-2xl font-bold mb-4 text-[#D9534F]"></h2>
+            <div id="modal-content-area">
+                <!-- Subscription details go here -->
+            </div>
+            <div id="paypal-section" class="mt-6">
+                <p id="paypal-fallback" class="text-sm text-gray-500 hidden mb-4">
+                    If the payment buttons do not load, please try refreshing the page.
+                </p>
+                <div id="paypal-button-container-P-7R4337928G9491641NDZ2DFI"></div>
+            </div>
+            
+            <!-- Authentication Content Area -->
+            <h2 id="auth-modal-title" class="text-2xl font-bold mb-4 text-[#D9534F] hidden"></h2>
+            <div id="auth-modal-content" class="hidden">
+                <!-- Sign In/Up/Forgot Password Forms Go Here -->
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Success Banner -->
+    <div id="successBanner" class="success-banner">
+        Subscription successful! Thank you for your support!
+    </div>
+    
+    <script>
+        const videoData = [
+            // OCT
+            { id: 1, title: "Cozy Refresh: Sweater & Candle", theme: "Shopping, Cozy Haul", img: "https://i.imgur.com/glrujhV.png", link: "cozy_refresh_interactive.html", description: "Exclusive links and styling secrets inside!", premium: true, month: "OCT" },
+            { id: 2, title: "Coffee Shop Sweetness", theme: "Family Outing, Sibling Fun", img: "https://i.imgur.com/oWyvEjr.mp4", link: "coffee_shop_story.html", description: "My little sister's chocolate milk date! ☕", premium: false, month: "OCT" },
+            { id: 6, title: "Dream Home Decor Haul", theme: "HomeGoods, Interior Design", img: "https://i.imgur.com/51xURSM.mp4", link: "home_haul_interactive.html", description: "Exclusive links and styling secrets inside!", premium: true, month: "OCT" },
+            // NOV
+            { id: 7, title: "Spicy Sandwich & Sweet Sister", theme: "Family Lunch, Comfort Food", img: "https://i.imgur.com/D7S4y1Y.mp4", link: "chick_fil_a_lunch.html", description: "Lunch date with Kinko and her favorite doll. (Nov Pro)", premium: true, month: "NOV" },
+            { id: 3, title: "The Doll Doctor is IN!", theme: "Sibling Care, DIY Repair", img: "https://i.imgur.com/ymVkIGQ.mp4", link: "doll_repair_interactive.html", description: "Saving her favorite toy with a tiny screwdriver. (Nov Exclusive)", premium: true, month: "NOV" },
+            // DEC
+            { id: 5, title: "Top 5 Drinks Face-Off", theme: "Sibling Ranking, Food Review", img: "https://i.imgur.com/PdqvHbt.mp4", link: "top_5_drinks_interactive.html", description: "Whose favorite made the #1 spot? (Dec Pro)", premium: true, month: "DEC" },
+            { id: 4, title: "Rainbow Cake Revolution", theme: "Baking, DIY Fun", img: "https://i.imgur.com/34WKI8Y.mp4", link: "rainbow_cake_interactive.html", description: "The most satisfying cake layers you'll ever see! 🌈", premium: false, month: "DEC" },
+        ];
+
+        const modal = document.getElementById('mainModal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalContentArea = document.getElementById('modal-content-area');
+        const paypalSection = document.getElementById('paypal-section');
+        const successBanner = document.getElementById('successBanner');
+        
+        // Gemini API configuration (variables kept for potential future use, though functions are removed)
+        const apiKey = "";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+        function openModal() { modal.style.display = "block"; }
+        function closeModal() { 
+            modal.style.display = "none"; 
+            // Reset modal state
+            document.getElementById('auth-modal-title').classList.add('hidden');
+            document.getElementById('auth-modal-content').classList.add('hidden');
+            document.getElementById('modal-title').classList.remove('hidden');
+            document.getElementById('modal-content-area').classList.remove('hidden');
+            document.getElementById('paypal-section').classList.remove('hidden');
+        }
+        
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        // --- PAYPAL Logic and UI (Stabilized) ---
+
+        function showSuccessBanner() {
+            successBanner.style.display = 'block';
+            setTimeout(() => {
+                successBanner.style.display = 'none';
+            }, 5000);
+        }
+
+        function handlePayPalSubscriptionSuccess(subscriptionID) {
+            closeModal();
+            showSuccessBanner();
+        }
+
+        function renderPayPalButton() {
+            const containerId = 'paypal-button-container-P-7R4337928G9491641NDZ2DFI';
+            const fallback = document.getElementById('paypal-fallback');
+
+            // --- CRITICAL FIX: Block rendering in sandbox environment to avoid security errors ---
+            const isSandbox = typeof window.location.host === 'undefined' || window.location.host === '' || window.location.host.includes('null');
+
+            if (isSandbox) {
+                 // Simulate success handler for demonstration purposes in an environment where PayPal is blocked
+                const simulateSubscription = () => {
+                    handlePayPalSubscriptionSuccess("SIMULATED_ID_12345");
+                };
+
+                fallback.classList.remove('hidden');
+                document.getElementById(containerId).innerHTML = ''; // Clear actual button area
+                fallback.innerHTML = `
+                    <p class="text-red-400 font-semibold mb-2">🔒 Payment Button Blocked</p>
+                    <p class="mb-4">The PayPal button cannot render in this restricted sandbox environment due to security policies (Error: Can not read window host). </p>
+                    <p class="text-sm mb-4">To demonstrate functionality, click below to simulate a successful subscription:</p>
+                    <button onclick="simulateSubscription()" class="bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors">
+                        Simulate Successful Subscription
+                    </button>
+                `;
+                return; 
+            }
+
+            // --- Original PayPal rendering logic (only runs in safe environments) ---
+            if (typeof paypal !== 'undefined' && paypal.Buttons) {
+                fallback.classList.add('hidden');
+                try {
+                    paypal.Buttons({
+                        style: {
+                            shape: 'rect',
+                            color: 'gold',
+                            layout: 'vertical',
+                            label: 'subscribe'
+                        },
+                        createSubscription: function(data, actions) {
+                            return actions.subscription.create({
+                                plan_id: 'P-7R4337928G9491641NDZ2DFI'
+                            });
+                        },
+                        onApprove: function(data, actions) {
+                            handlePayPalSubscriptionSuccess(data.subscriptionID);
+                        },
+                        onError: function(err) {
+                            console.error('PayPal Button Error:', err);
+                            fallback.innerHTML = 'Payment processing error. See console for details.';
+                            fallback.classList.remove('hidden');
+                        }
+                    }).render(`#${containerId}`);
+                } catch (e) {
+                    console.error('PayPal Rendering Failed:', e);
+                    fallback.textContent = 'Subscription button failed to render. Please refresh the page.';
+                    fallback.classList.remove('hidden');
+                }
+            } else {
+                fallback.textContent = 'Loading PayPal button...';
+                fallback.classList.remove('hidden');
+                setTimeout(renderPayPalButton, 500); 
+            }
+        }
+
+        function openSubscriptionModal() {
+            // Hide Auth UI elements
+            document.getElementById('auth-modal-title').classList.add('hidden');
+            document.getElementById('auth-modal-content').classList.add('hidden');
+
+            // Show Payment UI elements
+            document.getElementById('modal-title').classList.remove('hidden');
+            document.getElementById('modal-content-area').classList.remove('hidden');
+            document.getElementById('paypal-section').classList.remove('hidden');
+
+            modalTitle.textContent = "💎 Unlock Premium Content";
+            modalContentArea.innerHTML = `
+                <p class="mb-4 text-gray-300">Get access to exclusive content, behind-the-scenes hauls, and detailed tutorials for only $4.99/month!</p>
+                <ul class="list-disc list-inside space-y-2 text-sm text-gray-400 ml-4">
+                    <li>Full product links for all hauls.</li>
+                    <li>Advanced baking and DIY tutorials.</li>
+                    <li>Direct link to the Trend Idea Generator!</li>
+                </ul>
+            `;
+            openModal();
+            renderPayPalButton();
+        }
+
+        // --- RENDER FEED ---
+
+        function renderFeed() {
+            const feedContainer = document.getElementById('tiktok-feed');
+            
+            videoData.forEach(video => {
+                const isVideo = video.img.endsWith('.mp4');
+                const thumbnailElement = isVideo ? 
+                    `<video class="video-thumbnail" src="${video.img}" loop muted preload="metadata" onmouseover="this.play()" onmouseout="this.pause()"></video>` :
+                    `<img class="video-thumbnail" src="${video.img}" alt="${video.title}">`;
+                
+                const subscriptionButton = video.premium ? `
+                    <button onclick="openSubscriptionModal()" class="bg-[#F0AD4E] text-black font-semibold text-sm py-2 px-3 rounded-full shadow-lg transition-transform duration-200 hover:scale-105">
+                        SUBSCRIBE TO UNLOCK
+                    </button>` : '';
+
+                // Optimization button REMOVED
+
+                // New element for scheduled month:
+                const scheduleBadge = video.month ? 
+                    `<span class="absolute top-4 left-4 bg-gray-900 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-lg border border-[#D9534F]">${video.month} RELEASE</span>` : '';
+
+                const cardHTML = `
+                    <div class="video-card">
+                        ${thumbnailElement}
+                        ${scheduleBadge}
+                        
+                        <div class="overlay">
+                            <!-- Bottom Left Content -->
+                            <div class="flex flex-col">
+                                <h3 class="text-lg font-bold">${video.title}</h3>
+                                <p class="text-sm text-gray-300">${video.description}</p>
+                            </div>
+
+                            <!-- Action Buttons and Optimization (OPTIMIZATION REMOVED) -->
+                            <div class="absolute right-4 bottom-4 flex flex-col items-center space-y-5">
+                                
+                                <div class="flex flex-col items-center text-xs">
+                                    <span class="text-2xl">❤️</span>
+                                    <span>2.4M</span>
+                                </div>
+                                <div class="flex flex-col items-center text-xs">
+                                    <span class="text-2xl">💬</span>
+                                    <span>3.1K</span>
+                                </div>
+                                <div class="flex flex-col items-center text-xs">
+                                    <span class="text-2xl">🔗</span>
+                                    <span>Share</span>
+                                
+                                </div>
+                            </div>
+
+                            <!-- Play/Subscription Overlay -->
+                            <a href="${video.link}" target="_blank" class="play-button">
+                                <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M6 5.5l9 4.5-9 4.5z"/>
+                                </svg>
+                            </a>
+                            
+                            <!-- Premium Lock -->
+                            ${video.premium ? `
+                                <div class="absolute top-0 left-0 w-full h-full bg-black bg-opacity-70 flex flex-col items-center justify-center p-8">
+                                    <h3 class="text-3xl font-extrabold text-[#D9534F] mb-4">PREMIUM LOCK</h3>
+                                    <p class="text-center text-gray-300 mb-6">This content includes exclusive links and secrets.</p>
+                                    ${subscriptionButton}
+                                </div>
+                            ` : ''}
+
+                        </div>
+                    </div>
+                `;
+                feedContainer.innerHTML += cardHTML;
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', renderFeed);
+    </script>
+</body>
+</html>
