@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Christina's Feed</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Lora:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Clean & Whimsical (Soft Pink, White, Teal) -->
+    <!-- Application Structure Plan: The SPA uses a clean, two-column layout for easy reading: Mission Statement (Hero) -> Meet the Stars (Now with two columns of images for Kinko) -> Content Pillars. It is designed to be fully self-contained and visually appealing. -->
+    <!-- Visualization & Content Choices: Source: User's content history/theme. Goal: Define brand identity and engage new visitors. Viz/Method: Responsive grid layout (Tailwind) and cheerful pastel colors. Unicode emojis punctuate the content pillars. Justification: A simple, organized structure maximizes clarity for introductory content. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #FDFDFD; /* Near White */
+            color: #4A4A4A;
+        }
+        .font-serif {
+            font-family: 'Lora', serif;
+        }
+        .highlight-teal {
+            color: #20B2AA; /* Light Sea Green */
+        }
+        .bg-card {
+            background-color: #F5F5F5; /* Light Gray */
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <main class="container mx-auto px-4 py-12 sm:px-6 lg:px-8 max-w-4xl">
+
+        <!-- Header -->
+        <header class="text-center mb-12 border-b-2 pb-4 border-pink-100">
+            <h1 class="font-serif text-4xl md:text-5xl font-bold highlight-teal">About Christina's Feed</h1>
+            <p class="mt-2 text-lg text-gray-600">Where every day is a new interactive story!</p>
+        </header>
+
+        <!-- Mission Statement -->
+        <section class="mb-12 bg-card p-6 rounded-xl shadow-md">
+            <h2 class="font-serif text-2xl font-semibold mb-3 highlight-teal">Our Mission</h2>
+            <p class="text-gray-700 leading-relaxed">
+                This hub is a place to celebrate the <strong>magic in the mundane</strong>. We focus on finding joy in simple moments—from baking colorful cakes and finding cozy home decor, to navigating the funny, chaotic world of having a little sister. Our goal is to create content that is <strong>authentic, heartwarming, and always fun</strong>.
+            </p>
+            
+            <!-- NEW Fandom Disclosure -->
+            <p class="text-xs italic text-gray-500 mt-4 pt-4 border-t border-gray-300">
+                <span class="font-bold">Disclaimer:</span> The characters and content on this feed are part of the **BrooketheSilly fandom**. See more here: 
+                <a href="https://linktr.ee/BrooketheSilly" target="_blank" class="text-blue-500 hover:text-blue-700 underline">BrooketheSilly | Instagram | Linktree</a>
+            </p>
+        </section>
+
+        <!-- Meet the Stars Grid -->
+        <section class="mb-12">
+            <h2 class="font-serif text-3xl font-bold text-center mb-8 highlight-teal">Meet the Stars</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Christina (Updated with Photo) -->
+                <div class="bg-white p-6 rounded-xl shadow-lg border-t-4 border-pink-300">
+                    <h3 class="font-bold text-xl mb-2 highlight-teal">Christina (The Big Sis)</h3>
+                    <div class="mb-4">
+                        <img src="https://i.imgur.com/LJUH3l5.png" alt="Christina, the big sister and creator" class="w-full h-auto rounded-lg shadow-sm">
+                    </div>
+                    <p class="text-gray-700">
+                        The <strong>creator, expert chef, and chief builder</strong> behind the scenes. Christina plans the DIY projects, masters the dance trends, and attempts to maintain focus (mostly failing) when the music starts. She's focused on <strong>lifestyle, fitness, and design</strong>—and documenting every hilarious moment of toddlerhood.
+                    </p>
+                </div>
+                <!-- Kinko (Updated with new description) -->
+                <div class="bg-white p-6 rounded-xl shadow-lg border-t-4 border-pink-300">
+                    <h3 class="font-bold text-xl mb-2 highlight-teal">Kinko (The Little Sis)</h3>
+                    
+                    <!-- New Image Grid (4 images) -->
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <img src="https://i.imgur.com/y54fN4K.png" alt="Kinko smiling" class="w-full h-auto rounded-lg shadow-sm">
+                        <img src="https://i.imgur.com/66ldPh6.png" alt="Kinko looking out the window" class="w-full h-auto rounded-lg shadow-sm">
+                        <img src="https://i.imgur.com/M18Hobv.png" alt="Kinko laughing with pigtails" class="w-full h-auto rounded-lg shadow-sm">
+                        <img src="https://i.imgur.com/VVnrQy8.png" alt="Kinko in a yellow top with pigtails" class="w-full h-auto rounded-lg shadow-sm">
+                    </div>
+                    
+                    <p class="text-gray-700">
+                        Kinko is the kind of child who doesn’t just wear a bear suit—she <strong>becomes the bear</strong>. Fuzzy, wide-eyed, and full of wonder, she’s the youngest—a little ember of curiosity wrapped in orange fleece. Her hood has ears, but her real antennae are emotional: tuned to every rustle of leaves, every blur beyond the glass. She doesn’t speak in full sentences yet, but her expressions are essays. Her surprise is sacred. Her awe is contagious.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Content Pillars -->
+        <section class="mb-12 bg-card p-6 rounded-xl shadow-md">
+            <h2 class="font-serif text-2xl font-semibold mb-4 highlight-teal">What You'll Find Here</h2>
+            <div class="space-y-4">
+                <div class="flex items-start space-x-3">
+                    <span class="text-2xl pt-1">🏡</span>
+                    <div>
+                        <h4 class="font-semibold text-lg highlight-teal">Home & DIY Projects</h4>
+                        <p class="text-gray-700">From turning a bookshelf into a dollhouse to our annual cozy refresh hauls.</p>
+                    </div>
+                </div>
+                 <div class="flex items-start space-x-3">
+                    <span class="text-2xl pt-1">🍽️</span>
+                    <div>
+                        <h4 class="font-semibold text-lg highlight-teal">Food & Fun Challenges</h4>
+                        <p class="text-gray-700">Taste tests, messy baking, and challenging ourselves to make specialty drinks (like our Pink Sauce!).</p>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-3">
+                    <span class="text-2xl pt-1">💖</span>
+                    <div>
+                        <h4 class="font-semibold text-lg highlight-teal">Sibling Life & Love</h4>
+                        <p class="text-gray-700">The wholesome, hilarious reality of big sister life: from fixing broken dolls to epic dance-offs.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <footer class="text-center pt-4 text-gray-500 text-sm">
+            Thank you for being part of our journey!
+        </footer>
+
+    </main>
+</body>
+</html>
