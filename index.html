@@ -6,8 +6,15 @@
     <title>Interactive Story Hub (TikTok Feed Style)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    
-    <!-- PayPal SDK Inclusion - REMOVED AS IT CAUSES CRASHES IN SANDBOX ENVIRONMENTS -->
+   <script id="paypal-sdk-loader">
+        // CRITICAL CHECK: Prevent PayPal SDK from loading if we are in a sandbox environment where it will crash the app.
+        if (typeof window.location.host !== 'undefined' && window.location.host !== '' && !window.location.host.includes('null')) {
+            const script = document.createElement('script');
+            script.src = "https://www.paypal.com/sdk/js?client-id=Ae3_17mdOsRSLXrQo8SvoeNaU764XKsqVgXlGBTav-M0yNq_bn-BY8LvxQyaK9tLuRPsJBO2oHU3wbEx&vault=true&intent=subscription";
+            script.setAttribute('data-sdk-integration-source', 'button-factory');
+            document.head.appendChild(script);
+        }
+    </script>
     
     <style>
         body {
