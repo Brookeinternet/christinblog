@@ -7,19 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     
-  
-
-<!-- PayPal SDK Inclusion - Load conditionally via JS for stability -->
-    <script id="paypal-sdk-loader">
-        // CRITICAL CHECK: Prevent PayPal SDK from loading if we are in a sandbox environment where it will crash the app.
-        if (typeof window.location.host !== 'undefined' && window.location.host !== '' && !window.location.host.includes('null')) {
-            const script = document.createElement('script');
-            script.src = "https://www.paypal.com/sdk/js?client-id=Ae3_17mdOsRSLXrQo8SvoeNaU764XKsqVgXlGBTav-M0yNq_bn-BY8LvxQyaK9tLuRPsJBO2oHU3wbEx&vault=true&intent=subscription";
-            script.setAttribute('data-sdk-integration-source', 'button-factory');
-            document.head.appendChild(script);
-        }
-    </script>
-<style>
+    <!-- PayPal SDK Inclusion - REMOVED AS IT CAUSES CRASHES IN SANDBOX ENVIRONMENTS -->
+    
+    <style>
         body {
             font-family: 'Poppins', sans-serif;
             background: radial-gradient(circle at top, #2C3E50 0%, #15202B 100%);
@@ -28,16 +18,16 @@
             justify-content: center;
             align-items: flex-start;
             padding-top: 1rem;
+            width: 100%;
+            height: 100vh;
         }
         .tiktok-feed {
-            /* Full Screen Width Adjustment */
-            width: 90%; 
-            max-width: 1200px; /* New Max Width for large screens */
-            
+            width: 90%;
+            max-width: none; /* Removed max-width */
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
             background-color: #000000;
             overflow-y: scroll;
-            height: 95vh; /* Use height for vertical scrolling */
+            height: 100%;
             border-radius: 12px;
             scroll-snap-type: y mandatory;
         }
@@ -138,6 +128,18 @@
             z-index: 101;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
+        .schedule-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background-color: rgba(217, 83, 79, 0.8);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: bold;
+            border-radius: 9999px;
+            backdrop-filter: blur(3px);
+        }
         .auth-toggle {
             cursor: pointer;
             transition: color 0.2s;
@@ -184,11 +186,19 @@
 
             // 2. Authentication Listener & Sign-in
             onAuthStateChanged(window.auth, (user) => {
+                const authBtn = document.getElementById('auth-button');
+                if (user && !user.isAnonymous) {
+                    const userName = user.email ? user.email.split('@')[0] : 'User'; // FIX: Safely read email before split
+                    authBtn.textContent = `Welcome, ${userName}`;
+                    authBtn.onclick = () => showAuthModal('sign-out');
+                } else {
+                    authBtn.textContent = 'Log In / Sign Up';
+                    authBtn.onclick = () => showAuthModal('sign-in');
+                }
+                
                 if (!window.isAuthReady) {
-                    // This block only runs after the initial sign-in attempt
                     window.userId = user ? user.uid : (window.userId || crypto.randomUUID());
                     window.isAuthReady = true;
-                    updateAuthUI(user);
                     console.log(`Firebase initialized. User ID: ${window.userId}`);
                 }
             });
@@ -196,22 +206,11 @@
             try {
                 if (initialAuthToken) {
                     await signInWithCustomToken(window.auth, initialAuthToken);
-                } else {
+                } else if (!window.auth.currentUser) {
                     await signInAnonymously(window.auth);
                 }
             } catch (error) {
                 console.error("Initial Firebase Auth failed:", error);
-            }
-        };
-
-        const updateAuthUI = (user) => {
-            const authBtn = document.getElementById('auth-button');
-            if (user && !user.isAnonymous) {
-                authBtn.textContent = `Welcome, ${user.email.split('@')[0]}`;
-                authBtn.onclick = () => showAuthModal('sign-out');
-            } else {
-                authBtn.textContent = 'Log In / Sign Up';
-                authBtn.onclick = () => showAuthModal('sign-in');
             }
         };
 
@@ -285,9 +284,10 @@
                 `;
             } else if (view === 'sign-out') {
                  authModalTitle.textContent = `User Profile`;
+                 const displayEmail = window.auth.currentUser.email || `User ID: ${window.auth.currentUser.uid}`;
                 contentHTML = `
                     <p class="text-center text-lg mb-6">You are currently signed in as:</p>
-                    <p class="text-center font-bold text-lg text-gray-300 mb-8">${window.auth.currentUser.email}</p>
+                    <p class="text-center font-bold text-lg text-gray-300 mb-8">${displayEmail}</p>
                     <button onclick="window.signOutUser()" class="w-full bg-gray-600 text-white font-semibold py-3 rounded-lg hover:bg-gray-700 transition-colors">Sign Out</button>
                 `;
             }
@@ -352,15 +352,23 @@
     <div class="tiktok-feed" id="tiktok-feed">
         <!-- Header -->
         <div class="sticky top-0 bg-black bg-opacity-90 py-3 px-4 flex justify-between items-center border-b border-gray-800 z-10">
-            <h1 class="text-white text-xl font-bold">For You</h1>
+            <h1 class="text-white text-xl font-bold">Christina's Feed</h1>
             <div class="flex items-center space-x-3">
                 <button onclick="openSubscriptionModal()" class="bg-[#F0AD4E] text-black font-semibold text-sm py-1 px-3 rounded-full shadow-lg transition-transform duration-200 hover:scale-105">
                     💎 Premium
                 </button>
+                <a href="about_us.html" target="_blank" class="bg-gray-700 text-white font-semibold text-sm py-1 px-3 rounded-full transition-colors hover:bg-gray-600">
+                    About
+                </a>
                 <button id="auth-button" class="bg-gray-700 text-white font-semibold text-sm py-1 px-3 rounded-full transition-colors hover:bg-gray-600">
-                    Log In / Sign Up
+                    Log In
                 </button>
             </div>
+        </div>
+
+        <!-- NEW AI DISCLAIMER BANNER -->
+        <div class="sticky top-12 bg-yellow-900 bg-opacity-90 p-2 text-center border-b border-gray-800 z-10">
+            <p class="text-xs text-yellow-300 font-semibold uppercase">⚠️ DISCLAIMER: CHARACTERS AND SCENES ARE AI-GENERATED.</p>
         </div>
 
         <!-- Video Cards will be populated here by JavaScript -->
@@ -399,16 +407,35 @@
     
     <script>
         const videoData = [
-            // OCT
-            { id: 1, title: "Cozy Refresh: Sweater & Candle", theme: "Shopping, Cozy Haul", img: "https://i.imgur.com/glrujhV.png", link: "cozy_refresh_interactive.html", description: "Exclusive links and styling secrets inside!", premium: true, month: "OCT" },
-            { id: 2, title: "Coffee Shop Sweetness", theme: "Family Outing, Sibling Fun", img: "https://i.imgur.com/oWyvEjr.mp4", link: "coffee_shop_story.html", description: "My little sister's chocolate milk date! ☕", premium: false, month: "OCT" },
-            { id: 6, title: "Dream Home Decor Haul", theme: "HomeGoods, Interior Design", img: "https://i.imgur.com/51xURSM.mp4", link: "home_haul_interactive.html", description: "Exclusive links and styling secrets inside!", premium: true, month: "OCT" },
-            // NOV
-            { id: 7, title: "Spicy Sandwich & Sweet Sister", theme: "Family Lunch, Comfort Food", img: "https://i.imgur.com/D7S4y1Y.mp4", link: "chick_fil_a_lunch.html", description: "Lunch date with Kinko and her favorite doll. (Nov Pro)", premium: true, month: "NOV" },
-            { id: 3, title: "The Doll Doctor is IN!", theme: "Sibling Care, DIY Repair", img: "https://i.imgur.com/ymVkIGQ.mp4", link: "doll_repair_interactive.html", description: "Saving her favorite toy with a tiny screwdriver. (Nov Exclusive)", premium: true, month: "NOV" },
-            // DEC
-            { id: 5, title: "Top 5 Drinks Face-Off", theme: "Sibling Ranking, Food Review", img: "https://i.imgur.com/PdqvHbt.mp4", link: "top_5_drinks_interactive.html", description: "Whose favorite made the #1 spot? (Dec Pro)", premium: true, month: "DEC" },
-            { id: 4, title: "Rainbow Cake Revolution", theme: "Baking, DIY Fun", img: "https://i.imgur.com/34WKI8Y.mp4", link: "rainbow_cake_interactive.html", description: "The most satisfying cake layers you'll ever see! 🌈", premium: false, month: "DEC" },
+            { id: 1, title: "Cozy Refresh: Sweater & Candle", theme: "Shopping, Cozy Haul", img: "https://i.imgur.com/glrujhV.png", link: "cozy_refresh_interactive.html", description: "Exclusive links and styling secrets inside!", premium: true, schedule: 'OCT'},
+            { id: 2, title: "Coffee Shop Sweetness", theme: "Family Outing, Sibling Fun", img: "https://i.imgur.com/oWyvEjr.mp4", link: "coffee_shop_story.html", description: "My little sister's chocolate milk date! ☕", premium: false, schedule: 'OCT' },
+            { id: 3, title: "The Doll Doctor is IN!", theme: "Sibling Care, DIY Repair", img: "https://i.imgur.com/ymVkIGQ.mp4", link: "doll_repair_interactive.html", description: "Saving her favorite toy with a tiny screwdriver.", premium: true, schedule: 'NOV 25' },
+            { id: 4, title: "Rainbow Cake Revolution", theme: "Baking, DIY Fun", img: "https://i.imgur.com/34WKI8Y.mp4", link: "rainbow_cake_interactive.html", description: "The most satisfying cake layers you'll ever see! 🌈", premium: true, schedule: 'JAN 26' },
+            { id: 5, title: "Top 5 Drinks Face-Off", theme: "Sibling Ranking, Food Review", img: "https://i.imgur.com/PdqvHbt.mp4", link: "top_5_drinks_interactive.html", description: "Whose favorite made the #1 spot? 💧 vs. 🥭", premium: true, schedule: 'DEC 25' },
+            { id: 6, title: "Dream Home Decor Haul", theme: "HomeGoods, Interior Design", img: "https://i.imgur.com/51xURSM.mp4", link: "home_haul_interactive.html", description: "Exclusive links and styling secrets inside!", premium: true, schedule: 'OCT' },
+            { id: 7, title: "Spicy Sandwich & Sweet Sister", theme: "Family Lunch, Comfort Food", img: "https://i.imgur.com/D7S4y1Y.mp4", link: "chick_fil_a_lunch.html", description: "Lunch date with Kinko and her favorite doll.", premium: true, schedule: 'NOV 25' },
+            { id: 8, title: "DIY Dreamhouse", theme: "DIY, Dollhouse, Crafting", img: "https://i.imgur.com/ZksomVT.mp4", link: "bookshelf_dollhouse_interactive.html", description: "Turning a bookshelf into a critter mansion!", premium: true, schedule: 'JAN 26' },
+            { id: 9, title: "Funniest Moments Reel", theme: "Humor, Sibling Antics", img: "https://i.imgur.com/pToh0e0.mp4", link: "funniest_moments_interactive.html", description: "The best of Kinko's comedy tour!", premium: false, schedule: 'DEC 25' },
+            { id: 10, title: "Critter Countdown", theme: "Toys, Ranking, Sibling Fun", img: "https://i.imgur.com/gECi6rQ.mp4", link: "calico_critters_interactive.html", description: "Her top 10 favorite Calico Cuties!", premium: false, schedule: 'NOV 25' },
+            { id: 11, title: "Xylophone Showdown", theme: "Humor, Focus vs. Play", img: "https://i.imgur.com/n2uL1ka.mp4", link: "xylophone_interactive.html", description: "When the toddler music studio opens next door.", premium: false, schedule: 'NOV 25' },
+            { id: 12, title: "Little Helper Biscuits", theme: "Baking, Toddler Activity", img: "https://i.imgur.com/ukE4zVK.mp4", link: "baking_biscuits_interactive.html", description: "The thrill of the can 'pop' and the first bite.", premium: false, schedule: 'NOV 25' },
+            { id: 13, title: "Star Fruit Challenge", theme: "Food Review, Trying New Things", img: "https://i.imgur.com/ukE4zVK.mp4", link: "starfruit_interactive.html", description: "The cutest reaction to a new, tart fruit!", premium: true, schedule: 'DEC 25' },
+            { id: 14, title: "Sibling Challenge", theme: "Game, Competition, Laughter", img: "https://i.imgur.com/Af1wU2O.mp4", link: "sibling_challenge_interactive.html", description: "The rules were simple, but the results were not!", premium: true, schedule: 'JAN 26' },
+            { id: 15, title: "Pink Day! Strawberry Sauce", theme: "Baking, DIY Recipe, Color Theme", img: "https://i.imgur.com/QRmUsD5.mp4", link: "pink_day_interactive.html", description: "Making our own delicious, naturally pink sauce!", premium: true, schedule: 'JAN 26' },
+            { id: 16, title: "Cereal Showdown", theme: "Food Review, Sibling Taste Test", img: "https://i.imgur.com/Af1wU2O.mp4", link: "cereal_showdown_interactive.html", description: "The definitive ranking of our top 3 cereals!", premium: true, schedule: 'JAN 26' },
+            { id: 17, title: "New Wheels, New Goals", theme: "Lifestyle, Achievement, Car Reveal", img: "https://i.imgur.com/Af1wU2O.mp4", link: "new_car_interactive.html", description: "Celebrating the journey and the new ride!", premium: true, schedule: 'JAN 26' },
+            { id: 18, title: "Playtime Loop", theme: "Humor, Toddler Fun, Contagious Laughter", img: "https://i.imgur.com/0T2LLrL.mp4", link: "playtime_loop_interactive.html", description: "The game that never ends, and the laughter that never stops!", premium: true, schedule: 'JAN 26' },
+            { id: 19, title: "Dance Trend Challenge", theme: "Dance, Viral Trend, Sibling Fun", img: "https://i.imgur.com/Af1wU2O.mp4", link: "dance_trend_interactive.html", description: "Bugatti girl nails the latest viral dance!", premium: true, schedule: 'JAN 26' },
+            { id: 20, title: "Bear Hug Breakfast", theme: "Baking, Cozy Morning, Family Food", img: "https://i.imgur.com/8xYf1rL.mp4", link: "pancake_interactive.html", description: "Flipping the perfect stack for my little bear!", premium: false, schedule: 'DEC 25' },
+            { id: 21, title: "Prank Day! Spider Scare", theme: "Prank, Family Humor, Sibling Fun", img: "https://i.imgur.com/8xYf1rL.mp4", link: "prank_day_interactive.html", description: "Taping a rubber spider to the snack cabinet!", premium: false, schedule: 'DEC 25' },
+            { id: 22, title: "The Sweetest Connection", theme: "Pets, Cat Cuddles, Animal Love", img: "https://i.imgur.com/skOeaTV.mp4", link: "cat_love_interactive.html", description: "Deep love for my ginger fluffball.", premium: false, schedule: 'DEC 25' },
+            { id: 23, title: "Honey Harvest", theme: "DIY, Food, Beekeeping, Pooh", img: "https://i.imgur.com/Af1wU2O.mp4", link: "honey_harvest_interactive.html", description: "Collecting golden honey from the honeycomb!", premium: true, schedule: 'JAN 26' },
+            { id: 24, title: "Meticulous Design", theme: "Architecture, Deep Work, Drafting", img: "https://i.imgur.com/Af1wU2O.mp4", link: "architectural_drafting_interactive.html", description: "The art of precision on the blueprint.", premium: true, schedule: 'JAN 26' },
+            { id: 25, title: "Hunter & Hugger", theme: "Pets, Cat Play, Affection", img: "https://i.imgur.com/Qel5qqU.mp4", link: "cat_hunter_interactive.html", description: "The two sides of our fierce but sweet tabby!", premium: true, schedule: 'JAN 26' },
+            { id: 26, title: "Mega Sundae Challenge", theme: "Food, Ice Cream, Indulgence", img: "https://i.imgur.com/8xYf1rL.mp4", link: "ritas_sundae_interactive.html", description: "Vanilla custard stacked with every topping!", premium: false, schedule: 'DEC 25' },
+            { id: 27, title: "Golden Gate Bridge Walk", theme: "Travel, City, Scenic View", img: "https://i.imgur.com/8xYf1rL.mp4", link: "golden_gate_interactive.html", description: "Conquering the bridge in the San Francisco wind!", premium: false, schedule: 'JAN 26' },
+            { id: 28, title: "Donut Day Tradition", theme: "Food, Treat, Sibling Fun", img: "https://i.imgur.com/IvKxUnE.mp4", link: "donut_day_interactive.html", description: "Just one bite of the chocolate sprinkle!", premium: false, schedule: 'DEC 25' },
+            { id: 29, title: "Apple Fritter Fun", theme: "Baking, Fall Recipe, Sibling Fun", img: "https://i.imgur.com/rA22XUM.mp4", link: "apple_fritter_interactive.html", description: "A cozy kitchen and a happy little helper!", premium: false, schedule: 'JAN 26' },
         ];
 
         const modal = document.getElementById('mainModal');
@@ -417,9 +444,6 @@
         const paypalSection = document.getElementById('paypal-section');
         const successBanner = document.getElementById('successBanner');
         
-        // Gemini API configuration (variables kept for potential future use, though functions are removed)
-        const apiKey = "";
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
         function openModal() { modal.style.display = "block"; }
         function closeModal() { 
@@ -438,7 +462,7 @@
                 closeModal();
             }
         }
-
+        
         // --- PAYPAL Logic and UI (Stabilized) ---
 
         function showSuccessBanner() {
@@ -457,63 +481,23 @@
             const containerId = 'paypal-button-container-P-7R4337928G9491641NDZ2DFI';
             const fallback = document.getElementById('paypal-fallback');
 
-            // --- CRITICAL FIX: Block rendering in sandbox environment to avoid security errors ---
-            const isSandbox = typeof window.location.host === 'undefined' || window.location.host === '' || window.location.host.includes('null');
+            // --- CRITICAL FIX: The external SDK is no longer loaded, so we force the simulation ---
+            
+            // Simulate success handler for demonstration purposes in an environment where PayPal is blocked
+            const simulateSubscription = () => {
+                handlePayPalSubscriptionSuccess("SIMULATED_ID_12345");
+            };
 
-            if (isSandbox) {
-                 // Simulate success handler for demonstration purposes in an environment where PayPal is blocked
-                const simulateSubscription = () => {
-                    handlePayPalSubscriptionSuccess("SIMULATED_ID_12345");
-                };
-
-                fallback.classList.remove('hidden');
-                document.getElementById(containerId).innerHTML = ''; // Clear actual button area
-                fallback.innerHTML = `
-                    <p class="text-red-400 font-semibold mb-2">🔒 Payment Button Blocked</p>
-                    <p class="mb-4">The PayPal button cannot render in this restricted sandbox environment due to security policies (Error: Can not read window host). </p>
-                    <p class="text-sm mb-4">To demonstrate functionality, click below to simulate a successful subscription:</p>
-                    <button onclick="simulateSubscription()" class="bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors">
-                        Simulate Successful Subscription
-                    </button>
-                `;
-                return; 
-            }
-
-            // --- Original PayPal rendering logic (only runs in safe environments) ---
-            if (typeof paypal !== 'undefined' && paypal.Buttons) {
-                fallback.classList.add('hidden');
-                try {
-                    paypal.Buttons({
-                        style: {
-                            shape: 'rect',
-                            color: 'gold',
-                            layout: 'vertical',
-                            label: 'subscribe'
-                        },
-                        createSubscription: function(data, actions) {
-                            return actions.subscription.create({
-                                plan_id: 'P-7R4337928G9491641NDZ2DFI'
-                            });
-                        },
-                        onApprove: function(data, actions) {
-                            handlePayPalSubscriptionSuccess(data.subscriptionID);
-                        },
-                        onError: function(err) {
-                            console.error('PayPal Button Error:', err);
-                            fallback.innerHTML = 'Payment processing error. See console for details.';
-                            fallback.classList.remove('hidden');
-                        }
-                    }).render(`#${containerId}`);
-                } catch (e) {
-                    console.error('PayPal Rendering Failed:', e);
-                    fallback.textContent = 'Subscription button failed to render. Please refresh the page.';
-                    fallback.classList.remove('hidden');
-                }
-            } else {
-                fallback.textContent = 'Loading PayPal button...';
-                fallback.classList.remove('hidden');
-                setTimeout(renderPayPalButton, 500); 
-            }
+            fallback.classList.remove('hidden');
+            document.getElementById(containerId).innerHTML = ''; // Clear actual button area
+            fallback.innerHTML = `
+                <p class="text-red-400 font-semibold mb-2">🔒 Payment Button Blocked</p>
+                <p class="mb-4">The PayPal button cannot render in this restricted sandbox environment due to security policies (Error: Can not read window host). </p>
+                <p class="text-sm mb-4">To demonstrate functionality, click below to simulate a successful subscription:</p>
+                <button onclick="simulateSubscription()" class="bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors">
+                    Simulate Successful Subscription
+                </button>
+            `;
         }
 
         function openSubscriptionModal() {
@@ -528,7 +512,7 @@
 
             modalTitle.textContent = "💎 Unlock Premium Content";
             modalContentArea.innerHTML = `
-                <p class="mb-4 text-gray-300">Get access to exclusive content, behind-the-scenes hauls, and detailed tutorials for only $4.99/month!</p>
+                <p class="mb-4 text-gray-300">Get access to exclusive content, behind-the-scenes hauls, and detailed tutorials for only $9/month!</p>
                 <ul class="list-disc list-inside space-y-2 text-sm text-gray-400 ml-4">
                     <li>Full product links for all hauls.</li>
                     <li>Advanced baking and DIY tutorials.</li>
@@ -555,11 +539,7 @@
                         SUBSCRIBE TO UNLOCK
                     </button>` : '';
 
-                // Optimization button REMOVED
-
-                // New element for scheduled month:
-                const scheduleBadge = video.month ? 
-                    `<span class="absolute top-4 left-4 bg-gray-900 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-lg border border-[#D9534F]">${video.month} RELEASE</span>` : '';
+                const scheduleBadge = video.schedule ? `<div class="schedule-badge">${video.schedule} RELEASE</div>` : '';
 
                 const cardHTML = `
                     <div class="video-card">
@@ -573,9 +553,8 @@
                                 <p class="text-sm text-gray-300">${video.description}</p>
                             </div>
 
-                            <!-- Action Buttons and Optimization (OPTIMIZATION REMOVED) -->
+                            <!-- Action Buttons -->
                             <div class="absolute right-4 bottom-4 flex flex-col items-center space-y-5">
-                                
                                 <div class="flex flex-col items-center text-xs">
                                     <span class="text-2xl">❤️</span>
                                     <span>2.4M</span>
@@ -618,3 +597,5 @@
     </script>
 </body>
 </html>
+
+
