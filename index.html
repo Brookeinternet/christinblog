@@ -601,6 +601,183 @@
         }
 
         document.addEventListener('DOMContentLoaded', renderFeed);
+         // --- PAYPAL Logic and UI (Stabilized) ---
+
+        function showSuccessBanner() {
+            successBanner.style.display = 'block';
+            setTimeout(() => {
+                successBanner.style.display = 'none';
+            }, 5000);
+        }
+
+        function handlePayPalSubscriptionSuccess(subscriptionID) {
+            closeModal();
+            showSuccessBanner();
+        }
+
+        function renderPayPalButton() {
+            const containerId = 'paypal-button-container-P-7R4337928G9491641NDZ2DFI';
+            const fallback = document.getElementById('paypal-fallback');
+
+            // --- CRITICAL FIX: Block rendering in sandbox environment to avoid security errors ---
+            const isSandbox = typeof window.location.host === 'undefined' || window.location.host === '' || window.location.host.includes('null');
+
+            if (isSandbox) {
+                 // Simulate success handler for demonstration purposes in an environment where PayPal is blocked
+                const simulateSubscription = () => {
+                    handlePayPalSubscriptionSuccess("SIMULATED_ID_12345");
+                };
+
+                fallback.classList.remove('hidden');
+                document.getElementById(containerId).innerHTML = ''; // Clear actual button area
+                fallback.innerHTML = `
+                    <p class="text-red-400 font-semibold mb-2">🔒 Payment Button Blocked</p>
+                    <p class="mb-4">The PayPal button cannot render in this restricted sandbox environment due to security policies (Error: Can not read window host). </p>
+                    <p class="text-sm mb-4">To demonstrate functionality, click below to simulate a successful subscription:</p>
+                    <button onclick="simulateSubscription()" class="bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors">
+                        Simulate Successful Subscription
+                    </button>
+                `;
+                return; 
+            }
+
+            // --- Original PayPal rendering logic (only runs in safe environments) ---
+            if (typeof paypal !== 'undefined' && paypal.Buttons) {
+                fallback.classList.add('hidden');
+                try {
+                    paypal.Buttons({
+                        style: {
+                            shape: 'rect',
+                            color: 'gold',
+                            layout: 'vertical',
+                            label: 'subscribe'
+                        },
+                        createSubscription: function(data, actions) {
+                            return actions.subscription.create({
+                                plan_id: 'P-7R4337928G9491641NDZ2DFI'
+                            });
+                        },
+                        onApprove: function(data, actions) {
+                            handlePayPalSubscriptionSuccess(data.subscriptionID);
+                        },
+                        onError: function(err) {
+                            console.error('PayPal Button Error:', err);
+                            fallback.innerHTML = 'Payment processing error. See console for details.';
+                            fallback.classList.remove('hidden');
+                        }
+                    }).render(`#${containerId}`);
+                } catch (e) {
+                    console.error('PayPal Rendering Failed:', e);
+                    fallback.textContent = 'Subscription button failed to render. Please refresh the page.';
+                    fallback.classList.remove('hidden');
+                }
+            } else {
+                fallback.textContent = 'Loading PayPal button...';
+                fallback.classList.remove('hidden');
+                setTimeout(renderPayPalButton, 500); 
+            }
+        }
+
+        function openSubscriptionModal() {
+            // Hide Auth UI elements
+            document.getElementById('auth-modal-title').classList.add('hidden');
+            document.getElementById('auth-modal-content').classList.add('hidden');
+
+            // Show Payment UI elements
+            document.getElementById('modal-title').classList.remove('hidden');
+            document.getElementById('modal-content-area').classList.remove('hidden');
+            document.getElementById('paypal-section').classList.remove('hidden');
+
+            modalTitle.textContent = "💎 Unlock Premium Content";
+            modalContentArea.innerHTML = `
+                <p class="mb-4 text-gray-300">Get access to exclusive content, behind-the-scenes hauls, and detailed tutorials for only $4.99/month!</p>
+                <ul class="list-disc list-inside space-y-2 text-sm text-gray-400 ml-4">
+                    <li>Full product links for all hauls.</li>
+                    <li>Advanced baking and DIY tutorials.</li>
+                    <li>Direct link to the Trend Idea Generator!</li>
+                </ul>
+            `;
+            openModal();
+            renderPayPalButton();
+        }
+
+        // --- RENDER FEED ---
+
+        function renderFeed() {
+            const feedContainer = document.getElementById('tiktok-feed');
+            
+            videoData.forEach(video => {
+                const isVideo = video.img.endsWith('.mp4');
+                const thumbnailElement = isVideo ? 
+                    `<video class="video-thumbnail" src="${video.img}" loop muted preload="metadata" onmouseover="this.play()" onmouseout="this.pause()"></video>` :
+                    `<img class="video-thumbnail" src="${video.img}" alt="${video.title}">`;
+                
+                const subscriptionButton = video.premium ? `
+                    <button onclick="openSubscriptionModal()" class="bg-[#F0AD4E] text-black font-semibold text-sm py-2 px-3 rounded-full shadow-lg transition-transform duration-200 hover:scale-105">
+                        SUBSCRIBE TO UNLOCK
+                    </button>` : '';
+
+                // Optimization button REMOVED
+
+                // New element for scheduled month:
+                const scheduleBadge = video.month ? 
+                    `<span class="absolute top-4 left-4 bg-gray-900 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-lg border border-[#D9534F]">${video.month} RELEASE</span>` : '';
+
+                const cardHTML = `
+                    <div class="video-card">
+                        ${thumbnailElement}
+                        ${scheduleBadge}
+                        
+                        <div class="overlay">
+                            <!-- Bottom Left Content -->
+                            <div class="flex flex-col">
+                                <h3 class="text-lg font-bold">${video.title}</h3>
+                                <p class="text-sm text-gray-300">${video.description}</p>
+                            </div>
+
+                            <!-- Action Buttons and Optimization (OPTIMIZATION REMOVED) -->
+                            <div class="absolute right-4 bottom-4 flex flex-col items-center space-y-5">
+                                
+                                <div class="flex flex-col items-center text-xs">
+                                    <span class="text-2xl">❤️</span>
+                                    <span>2.4M</span>
+                                </div>
+                                <div class="flex flex-col items-center text-xs">
+                                    <span class="text-2xl">💬</span>
+                                    <span>3.1K</span>
+                                </div>
+                                <div class="flex flex-col items-center text-xs">
+                                    <span class="text-2xl">🔗</span>
+                                    <span>Share</span>
+                                
+                                </div>
+                            </div>
+
+                            <!-- Play/Subscription Overlay -->
+                            <a href="${video.link}" target="_blank" class="play-button">
+                                <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M6 5.5l9 4.5-9 4.5z"/>
+                                </svg>
+                            </a>
+                            
+                            <!-- Premium Lock -->
+                            ${video.premium ? `
+                                <div class="absolute top-0 left-0 w-full h-full bg-black bg-opacity-70 flex flex-col items-center justify-center p-8">
+                                    <h3 class="text-3xl font-extrabold text-[#D9534F] mb-4">PREMIUM LOCK</h3>
+                                    <p class="text-center text-gray-300 mb-6">This content includes exclusive links and secrets.</p>
+                                    ${subscriptionButton}
+                                </div>
+                            ` : ''}
+
+                        </div>
+                    </div>
+                `;
+                feedContainer.innerHTML += cardHTML;
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', renderFeed);
+    </script>
     </script>
 </body>
 </html>
