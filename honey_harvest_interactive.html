@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Winnie the Pooh's Honey Harvest</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Bangers&display=swap" rel="stylesheet">
+    <!-- Release Date: January 26, 2026 -->
+    <!-- Chosen Palette: Honeycomb Gold & Red -->
+    <!-- Application Structure Plan: This SPA is a sequential DIY/educational guide: Intro (Pooh theme) -> The Honeycomb (with new image) -> Slicing the Wax -> Filtering -> Bottling -> Video Climax. Scroll animations enhance the process flow, turning a complex activity into charming, easy-to-follow steps. -->
+    <!-- Visualization & Content Choices: Source: Qualitative narrative about honey collection. Goal: Inform, Guide, Entertain. Viz/Method: Styled HTML sections with scroll animations. Unicode emojis (🍯, 🐝, 🔪) mark steps. Primary media: Source video. Interaction: Scrolling reveals content. Justification: Sequential reveal makes the process clear and matches the video's narrative arc. Library/Method: Vanilla JS (IntersectionObserver), HTML5 video. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #FFFDF8; /* Off-White/Creamy */
+            color: #57534E;
+        }
+        .font-display {
+            font-family: 'Bangers', cursive;
+            letter-spacing: 2px;
+        }
+        .scroll-animate {
+            opacity: 0;
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+            transform: translateY(30px);
+        }
+        .scroll-animate.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .highlight-gold {
+            color: #D97706; /* Amber 600 */
+        }
+        .bg-honey {
+             background-color: #FEF3C7; /* Amber 100 */
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <main id="main-content" class="container mx-auto px-4 py-16 sm:px-6 lg:px-8 max-w-3xl">
+
+        <!-- CONTENT LOCK LOGIC -->
+        <script>
+            const RELEASE_DATE = new Date('January 26, 2026 00:00:00');
+            const IS_PRO_CONTENT = true; 
+            const mainContent = document.getElementById('main-content');
+
+            function getTimeRemaining(endtime) {
+                const total = Date.parse(endtime) - Date.parse(new Date());
+                const seconds = Math.floor((total / 1000) % 60);
+                const minutes = Math.floor((total / 1000 / 60) % 60);
+                const hours = Math.floor((total / (1000 * 60 * 60)) % 24);
+                const days = Math.floor(total / (1000 * 60 * 60 * 24));
+                return { total, days, hours, minutes, seconds };
+            }
+
+            function initializeClock(id, endtime) {
+                const clock = document.getElementById(id);
+                const daysSpan = clock.querySelector('.days');
+                const hoursSpan = clock.querySelector('.hours');
+                const minutesSpan = clock.querySelector('.minutes');
+                const secondsSpan = clock.querySelector('.seconds');
+
+                function updateClock() {
+                    const t = getTimeRemaining(endtime);
+                    if (t.total <= 0) {
+                        clearInterval(timeinterval);
+                        loadContent();
+                        return;
+                    }
+                    daysSpan.innerHTML = t.days;
+                    hoursSpan.innerHTML = ('0' + t.hours).slice(-2);
+                    minutesSpan.innerHTML = ('0' + t.minutes).slice(-2);
+                    secondsSpan.innerHTML = ('0' + t.seconds).slice(-2);
+                }
+
+                updateClock();
+                const timeinterval = setInterval(updateClock, 1000);
+            }
+            
+            function loadLockScreen() {
+                 const isTimeLocked = Date.parse(new Date()) < Date.parse(RELEASE_DATE);
+                 
+                 mainContent.innerHTML = `
+                    <div class="text-center py-20 bg-white/80 rounded-xl shadow-2xl">
+                        <h1 class="font-display text-5xl font-bold text-[#D97706] mb-4">CONTENT LOCKED</h1>
+                        <p class="text-xl text-gray-600 mb-8">${IS_PRO_CONTENT ? '🔒 This is a PRO Exclusive Tutorial. 🔒' : ''}</p>
+
+                        ${isTimeLocked ? `
+                            <p class="text-lg text-gray-700 mb-4">Releases on January 26, 2026</p>
+                            <div id="countdown-clock" class="flex justify-center space-x-6 mb-10">
+                                <div class="text-center">
+                                    <span class="countdown-number days"></span>
+                                    <div class="text-sm font-semibold text-gray-500">DAYS</div>
+                                </div>
+                                <div class="text-center">
+                                    <span class="countdown-number hours"></span>
+                                    <div class="text-sm font-semibold text-gray-500">HOURS</div>
+                                </div>
+                                <div class="text-center">
+                                    <span class="countdown-number minutes"></span>
+                                    <div class="text-sm font-semibold text-gray-500">MINS</div>
+                                </div>
+                                <div class="text-center">
+                                    <span class="countdown-number seconds"></span>
+                                    <div class="text-sm font-semibold text-gray-500">SECS</div>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        <p class="text-gray-500 mt-4">Subscribe now to unlock this tutorial immediately on release!</p>
+                        <button onclick="window.openSubscriptionModal()" class="mt-4 bg-[#F0AD4E] text-black font-semibold py-3 px-8 rounded-full shadow-lg transition-transform hover:scale-105">
+                            Access PRO Membership
+                        </button>
+                    </div>
+                `;
+
+                if (isTimeLocked) {
+                    initializeClock('countdown-clock', RELEASE_DATE);
+                }
+            }
+
+            function loadContent() {
+            mainContent.innerHTML = `
+                <!-- Hero Section -->
+                <header class="text-center mb-20 md:mb-24 scroll-animate">
+                    <h1 class="font-display text-5xl md:text-7xl highlight-gold drop-shadow-lg">Pooh Bear's Honey Harvest</h1>
+                    <p class="mt-4 text-lg md:text-xl text-gray-700">Making golden honey at home, straight from the honeycomb.</p>
+                </header>
+
+                <!-- Step 1: The Honeycomb -->
+                <section class="mb-20 md:mb-24 scroll-animate text-center bg-white p-8 rounded-2xl shadow-lg border-t-4 border-yellow-500">
+                    <h2 class="font-serif text-3xl font-bold mb-4 highlight-gold">Phase 1: The Frame & The Capping</h2>
+                    <p class="text-7xl mb-4">🍯 🐝</p>
+                    <img src="https://i.imgur.com/TLWF8eV.jpeg" alt="Close up of a wooden honeycomb frame sealed with wax" class="w-full max-w-md mx-auto rounded-lg shadow-md mb-6">
+                    <p class="text-lg text-gray-700 leading-relaxed max-w-2xl mx-auto">
+                        We started with a fresh frame of honeycomb, completely sealed with white wax by the bees—the <strong>capping</strong>. My little Pooh bear helper watched intently! This is pure, raw honey, and first, we have to open those little wax cells.
+                    </p>
+                </section>
+
+                <!-- Step 2: Slicing (Updated with Image) -->
+                <section class="mb-20 md:mb-24 scroll-animate text-center bg-honey p-8 rounded-2xl shadow-xl">
+                    <h2 class="font-serif text-3xl font-bold mb-4 text-gray-700">Phase 2: Slicing the Wax</h2>
+                    <p class="text-7xl mb-4">🔪</p>
+                    <img src="https://i.imgur.com/mnIFunp.jpeg" alt="Close up of knife slicing wax caps off honeycomb" class="w-full max-w-md mx-auto rounded-lg shadow-md mb-6">
+                    <p class="text-lg text-gray-700 leading-relaxed max-w-2xl mx-auto">
+                        I carefully used a specialized knife to slice off the wax caps. This delicate step is called <strong>uncapping</strong>, and it allows the honey to flow freely out. The golden liquid starts to appear immediately!
+                    </p>
+                </section>
+
+                <!-- Step 3: Filtering (Updated with new Image) -->
+                <section class="mb-20 md:mb-24 scroll-animate text-center bg-white p-8 rounded-2xl shadow-lg border-t-4 border-yellow-500">
+                    <h2 class="font-serif text-3xl font-bold mb-4 highlight-gold">Phase 3: The Golden Flow</h2>
+                    <p class="text-7xl mb-4">💧</p>
+                    <img src="https://i.imgur.com/Fl97rIa.jpeg" alt="Golden honey dripping through a strainer" class="w-full max-w-md mx-auto rounded-lg shadow-md mb-6">
+                    <p class="text-lg text-gray-700 leading-relaxed max-w-2xl mx-auto">
+                        Next, we let the honey <strong>drain naturally</strong> through a strainer and cheesecloth. This catches any tiny bits of wax or debris, ensuring we get a perfectly clear, liquid gold product. This slow, natural filtration is mesmerizing to watch!
+                    </p>
+                </section>
+
+
+                <!-- Video Reveal Section -->
+                <section class="scroll-animate mb-20">
+                     <div class="text-center mb-12">
+                        <h2 class="font-display text-4xl md:text-5xl highlight-gold drop-shadow-lg">Watch the Sweet Process!</h2>
+                        <p class="mt-2 max-w-2xl mx-auto text-gray-700">See the full process: slicing the wax, the liquid flow, and the final jar!</p>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-2xl overflow-hidden p-4 max-w-md mx-auto">
+                         <video controls muted autoplay loop class="w-full h-auto rounded-lg">
+                            <source src="https://i.imgur.com/35sndg7.mp4" type="video/mp4"> <!-- Corrected video URL -->
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                </section>
+                
+                <!-- Final Thoughts (Updated with new Image) -->
+                <footer class="mt-20 text-center scroll-animate">
+                     <h2 class="font-serif text-3xl font-bold mb-4 text-gray-700">A Taste of Nature</h2>
+                     <img src="https://i.imgur.com/h1g8qh5.jpeg" alt="Close up of hand holding a full jar of fresh honey" class="w-full max-w-sm mx-auto rounded-lg shadow-md mb-6">
+                     <p class="text-7xl mb-4">🍯✨</p>
+                    <p class="text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto">
+                        Sharing this simple, hands-on process with my little helper was truly special. A full jar of <strong>nature's best treat</strong> is the perfect reward! Now we just need some toast for Pooh!
+                    </p>
+                </footer>
+
+            `;
+            // Initialize scroll animations after content is loaded
+            const animatedElements = document.querySelectorAll('.scroll-animate');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, {
+                threshold: 0.1 
+            });
+            animatedElements.forEach(element => {
+                observer.observe(element);
+            });
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const isTimeLocked = Date.parse(new Date()) < Date.parse(RELEASE_DATE);
+
+                if (isTimeLocked || IS_PRO_CONTENT) {
+                    loadLockScreen();
+                } else {
+                    loadContent();
+                }
+            });
+        </script>
+
+    </main>
+
+</body>
+</html>
